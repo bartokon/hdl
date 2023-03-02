@@ -5,7 +5,7 @@ module axi_lite_write_manager
 #(
     parameter ADDRESS_SIZE = 32,
     parameter DATA_SIZE = 32,
-
+    
     parameter WRITE_STROBE = (DATA_SIZE / 8)
 )
 (
@@ -69,6 +69,7 @@ module axi_lite_write_manager
                     STATE <= FETCH;
                 end
                 FETCH: begin 
+                //TODO: Could be merged for one less clock cycle
                     if (write_address_ready_reg && write_address_valid) begin 
                         write_address_reg <= write_address;
                         write_address_ready_reg <=0;
@@ -88,13 +89,13 @@ module axi_lite_write_manager
                 WRITE: begin 
                 //Todo: Add last n bits addres-range checking
                 //Addresing is global space!
-                //Xilinx minimum address space is 128 so last 7 bits for addressing internal register should be taken into account!
-                    if (write_address_reg == 0) begin 
+                //Xilinx minimum address space is 128 so last n bits for addressing internal register should be taken into account!
+                    if (write_address_reg[3:0] == 0) begin 
                         register_data_0 <= write_data_reg;
                         register_write_enable_0 <= 1;
                         write_response_reg <= 2'b00; //GOOD WRITE
                     end else begin 
-                        write_response_reg <= 2'b11; // Error wrong write address SLVERR
+                        write_response_reg <= 2'b10; // Error wrong write address SLVERR
                     end
                     STATE <= RESPONSE;
                     write_response_valid_reg <= 1;            

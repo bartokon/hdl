@@ -45,24 +45,24 @@ module tb_axi4_lite_write;
         addr = 0;
         data = 32'hdeadbeef;
         master_agent.AXI4LITE_WRITE_BURST(base_addr + addr, 0, data, resp);
-        addr = 1;
+        addr = 4;
         data = 32'h0000beef;
         master_agent.AXI4LITE_WRITE_BURST(base_addr + addr, 0, data, resp);  
-        addr = 2;
+        addr = 8;
         data = 32'hdead0000;
         master_agent.AXI4LITE_WRITE_BURST(base_addr + addr, 0, data, resp);
+        #500ns
+        addr = 12;
+        master_agent.AXI4LITE_READ_BURST(base_addr + addr, 0, data, resp);
+        $display("Data is %h", data);
         #500ns
         addr = 0;
         master_agent.AXI4LITE_READ_BURST(base_addr + addr, 0, data, resp);
         $display("Data is %h", data);
-        #500ns
-        addr = 1;
+        addr = 4;
         master_agent.AXI4LITE_READ_BURST(base_addr + addr, 0, data, resp);
         $display("Data is %h", data);
-        addr = 2;
-        master_agent.AXI4LITE_READ_BURST(base_addr + addr, 0, data, resp);
-        $display("Data is %h", data);
-        addr = 3;
+        addr = 8;
         master_agent.AXI4LITE_READ_BURST(base_addr + addr, 0, data, resp);
         $display("Data is %h", data);
 
