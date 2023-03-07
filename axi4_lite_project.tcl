@@ -2,10 +2,10 @@
 set origin_dir "."
 
 # Set the project name
-set proj_name "v_project"
+set proj_name "axi4_lite_project"
 
 variable script_file
-set script_file "v_project.tcl"
+set script_file "axi4_lite_project.tcl"
 
 # Create project
 create_project -force ${proj_name} ./${proj_name} -part xc7z010clg400-1

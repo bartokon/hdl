@@ -1,1 +1,1 @@
-vivado -source v_project.tcl -nolog -nojournal
+vivado -source axi4_lite_project.tcl -nolog -nojournal -mode batch
