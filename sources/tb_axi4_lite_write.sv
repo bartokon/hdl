@@ -12,7 +12,7 @@ module tb_axi4_lite_write;
     bit [1:0] resp = 0;
     bit [31:0] data = 0;
     
-    design_1_wrapper DUT
+    design_1 DUT
     (
         .aclk (aclk),
         .aresetn(aresetn)
@@ -32,7 +32,7 @@ module tb_axi4_lite_write;
     initial begin
         //Setup
         design_1_axi_vip_0_0_mst_t master_agent;
-        master_agent = new("master vip agent", DUT.design_1_i.axi_vip_0.inst.IF);
+        master_agent = new("master vip agent", DUT.axi_vip_0.inst.IF);
         master_agent.set_agent_tag("Master VIP");
         master_agent.set_verbosity(400);
         master_agent.start_master();

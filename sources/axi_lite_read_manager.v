@@ -4,8 +4,7 @@
 module axi_lite_read_manager
 #(
     parameter ADDRESS_SIZE = 32,
-    parameter DATA_SIZE = 32,
-    parameter WRITE_STROBE = (DATA_SIZE / 8)
+    parameter DATA_SIZE = 32
 )
 (
     //Read port
@@ -26,7 +25,7 @@ module axi_lite_read_manager
     
     input wire [DATA_SIZE - 1 :0] register_data_0
 );
-
+    
     localparam [2:0] RESET = 3'b00;
     localparam [2:0] FETCH = 3'b01;
     localparam [2:0] READ = 3'b10;
@@ -37,7 +36,7 @@ module axi_lite_read_manager
     reg [DATA_SIZE - 1 :0] read_data_reg = 0;
     reg read_address_ready_reg = 0;
     reg read_data_valid_reg = 0;
-    reg read_data_response_reg = 0;
+    reg [1 : 0] read_data_response_reg = 0;
     
     assign read_data_response = read_data_response_reg;
     assign read_address_ready = read_address_ready_reg;
@@ -64,9 +63,13 @@ module axi_lite_read_manager
                     end 
                 end
                 READ: begin 
+                    if (read_address_reg == 0) begin 
+                        read_data_reg <= register_data_0;
+                        read_data_response_reg <= 2'b00;
+                    end else begin 
+                        read_data_response_reg <= 2'b10;
+                    end
                     read_data_valid_reg <= 1;
-                    read_data_reg <= register_data_0;
-                    read_data_response_reg <= 2'b00;
                     STATE <= SEND;
                 end
                 SEND: begin 

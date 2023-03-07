@@ -4,9 +4,7 @@
 module axi_lite_write_manager
 #(
     parameter ADDRESS_SIZE = 32,
-    parameter DATA_SIZE = 32,
-    
-    parameter WRITE_STROBE = (DATA_SIZE / 8)
+    parameter DATA_SIZE = 32 
 )
 (
     //Write port
@@ -15,7 +13,7 @@ module axi_lite_write_manager
     output wire write_address_ready,
 
     input wire [DATA_SIZE - 1 :0] write_data,
-    input wire [WRITE_STROBE - 1 :0] write_data_strobe, //Indicates what bytes of data are valid - 1 bit for each byte in write_data
+    input wire [(DATA_SIZE / 8) - 1 :0] write_data_strobe, //Indicates what bytes of data are valid - 1 bit for each byte in write_data
     input wire write_data_valid,
     output wire write_data_ready,
 

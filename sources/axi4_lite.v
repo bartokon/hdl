@@ -10,10 +10,8 @@
 
 module axi4_lite
 #(
-    parameter ADDRESS_SIZE = 32,
-    parameter DATA_SIZE = 32,
-
-    parameter WRITE_STROBE = (DATA_SIZE / 8)
+    parameter integer ADDRESS_SIZE = 32,
+    parameter integer DATA_SIZE = 32
 )
 (
     //Read port
@@ -34,7 +32,7 @@ module axi4_lite
     output wire s_axi_awready,
 
     input wire [DATA_SIZE - 1 :0] s_axi_wdata,
-    input wire [WRITE_STROBE - 1 :0] s_axi_wstrb, //Indicates what bytes of data are valid - 1 bit for each byte in write_data
+    input wire [(DATA_SIZE / 8) - 1 :0] s_axi_wstrb, //Indicates what bytes of data are valid - 1 bit for each byte in write_data
     input wire s_axi_wvalid,
     output wire s_axi_wready,
 
@@ -44,15 +42,15 @@ module axi4_lite
     input wire s_axi_bready,
 
     //Misc
-    input wire s_axi_lite_clk,
-    input wire s_axi_lite_resetn 
+    input wire aclk,
+    input wire aresetn 
 );
 
     reg [DATA_SIZE - 1 :0] register_0;
     wire [DATA_SIZE - 1 :0] register_data_0;
     wire register_write_enable_0;
-    always @(posedge s_axi_lite_clk) begin 
-        if (s_axi_lite_resetn == 0) begin 
+    always @(posedge aclk) begin 
+        if (aresetn == 0) begin 
             register_0 <= 0;
         end else begin 
             if (register_write_enable_0 == 1) begin 
@@ -61,9 +59,11 @@ module axi4_lite
         end
     end
     
-    axi_lite_read_manager u0_axi_read_manager
-    (
-        .read_address(s_axi_araddr),
+    axi_lite_read_manager #(
+        .ADDRESS_SIZE(4),
+        .DATA_SIZE(32)
+    ) u0_axi_read_manager (
+        .read_address(s_axi_araddr[3:0]),
         .read_address_valid(s_axi_arvalid),
         .read_address_ready(s_axi_arready),
         
@@ -73,15 +73,17 @@ module axi4_lite
         
         .read_data_response(s_axi_rresp),
         
-        .aclk(s_axi_lite_clk),
-        .aresetn(s_axi_lite_resetn),
+        .aclk(aclk),
+        .aresetn(aresetn),
         
         .register_data_0(register_0)
     );
 
-    axi_lite_write_manager u0_axi_write_manager
-    (
-        .write_address(s_axi_awaddr),
+    axi_lite_write_manager #(
+        .ADDRESS_SIZE(4),
+        .DATA_SIZE(32)
+    ) u0_axi_write_manager (
+        .write_address(s_axi_awaddr[3:0]),
         .write_address_valid(s_axi_awvalid),
         .write_address_ready(s_axi_awready),
     
@@ -95,8 +97,8 @@ module axi4_lite
         .write_response_valid(s_axi_bvalid),
         .write_response_ready(s_axi_bready),
         
-        .aclk(s_axi_lite_clk),
-        .aresetn(s_axi_lite_resetn),
+        .aclk(aclk),
+        .aresetn(aresetn),
         
         .register_data_0(register_data_0),
         .register_write_enable_0(register_write_enable_0)
