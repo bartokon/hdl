@@ -8,7 +8,7 @@ module tb_skid_buffer;
 
 localparam int unsigned DATA_SIZE = 8;
 localparam int unsigned CLOCK_PERIOD = 5;
-localparam int unsigned NB_OF_ITERATIONS = 1024;
+localparam int unsigned NB_OF_ITERATIONS = 2**12;
 
 // Input ports
 logic [DATA_SIZE-1:0] data_i;
@@ -25,8 +25,6 @@ logic rst_clk_ni = 0;
 logic [DATA_SIZE-1:0] q_output[$];
 logic [DATA_SIZE-1:0] q_input[$];
 
-// https://support.xilinx.com/s/question/0D52E00006hphKESAY/is-it-possible-to-use-axi4-stream-verification-ip-directly-in-hdl-hierarchy-without-block-design-and-use-its-api-functions?language=en_US
-
 design_1_wrapper u0_axi4_stream_wips (
     .clk_i,
     .rst_clk_ni,
@@ -38,7 +36,7 @@ design_1_wrapper u0_axi4_stream_wips (
     .S_AXIS_0_tdata(data_o)
 );
 
-skid_buffer #(
+skid_buffer_wrapper #(
     .DATA_SIZE(DATA_SIZE)
 ) u0_skid_buffer (
     // Input ports
@@ -97,11 +95,10 @@ task compare_result;
             automatic logic [DATA_SIZE-1:0] in_data = q_input.pop_back();
             automatic logic [DATA_SIZE-1:0] out_data = q_output.pop_back();
             if (in_data == out_data) begin
-                $display("0x%h vs 0x%h \n", in_data, out_data);
+                //$display("0x%h vs 0x%h \n", in_data, out_data);
             end else begin
                 $error("Data is not the same! \n");
-                $display("0x%h vs 0x%h \n", in_data, out_data);
-                //$display("State: ");
+                $display("M: 0x%h vs S: 0x%h \n", in_data, out_data);
                 #10 $stop();
             end
         end
@@ -110,11 +107,11 @@ endtask
 
 always clk_i = #(CLOCK_PERIOD/2) ~clk_i;
 
-always @(negedge clk_i) begin
+always @(posedge clk_i) begin
     save_input(data_i, data_valid_i, data_ready_o);
 end
 
-always @(negedge clk_i) begin
+always @(posedge clk_i) begin
     save_output(data_o, data_valid_o, data_ready_i);
 end
 

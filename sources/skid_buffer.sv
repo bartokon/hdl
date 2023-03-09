@@ -26,7 +26,7 @@ fsm_state state_q, state_d;
 
 logic [DATA_SIZE-1:0] data_o_d, data_o_q;
 
-assign slave_stall = data_valid_i && !data_ready_i; //master is stalling
+assign slave_stall = data_valid_i && !data_ready_i;
 assign slave_intf_ready_and_valid = data_valid_o && data_ready_i;
 
 always_comb begin: main_fsm_logic
@@ -57,8 +57,8 @@ always_comb begin: io_logic
     data_o = data_o_q;
     data_valid_o = 1'b0;
     data_ready_o = 1'b0;
-    
-    unique case (state_q) //State_d or state_q
+
+    unique case (state_q)
         StFallThrough: begin
             data_o = data_i;
             data_o_d = data_i;
