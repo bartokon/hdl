@@ -81,6 +81,10 @@ connect_bd_net [get_bd_ports rst_clk_ni] [get_bd_pins axi4stream_vip_slave_0/are
 make_bd_intf_pins_external  [get_bd_intf_pins axi4stream_vip_master_0/M_AXIS]
 make_bd_intf_pins_external  [get_bd_intf_pins axi4stream_vip_slave_0/S_AXIS]
 
-make_wrapper -files [get_files ${proj_name}/${proj_name}.srcs/sources_1/bd/${bd_name}/${bd_name}.bd] -top
-add_files -norecurse ${proj_name}/${proj_name}.srcs/sources_1/bd/${bd_name}/hdl/design_1_wrapper.v
-set_property top skid_buffer [current_fileset]
+assign_bd_address
+validate_bd_design
+save_bd_design
+
+# make_wrapper -files [get_files ${proj_name}/${proj_name}.srcs/sources_1/bd/${bd_name}/${bd_name}.bd] -top
+# add_files -norecurse ${proj_name}/${proj_name}.srcs/sources_1/bd/${bd_name}/hdl/design_1_wrapper.v
+# set_property top skid_buffer [current_fileset]

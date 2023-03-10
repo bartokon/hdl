@@ -1,5 +1,5 @@
 //Warning: Can cause errors in V++
-//`default_nettype none
+`default_nettype wire
 
 module skid_buffer #(
     parameter int unsigned DATA_SIZE = 8

@@ -1,11 +1,11 @@
 # Set the reference directory for source file relative paths (by default the value is script directory path)
 set origin_dir "."
 
+# Set the block design name
+set bd_name "design_1"
+
 # Set the project name
 set proj_name "axi4_lite_project"
-
-variable script_file
-set script_file "axi4_lite_project.tcl"
 
 # Create project
 create_project -force ${proj_name} ./${proj_name} -part xc7z010clg400-1
@@ -36,6 +36,8 @@ update_compile_order -fileset sim_1
 
 #Create_bd
 create_bd_design "design_1"
+open_bd_design ${proj_name}/${proj_name}.srcs/sources_1/bd/${bd_name}/${bd_name}.bd
+
 create_bd_cell -type module -reference axi4_lite axi4_lite_0
 create_bd_cell -type ip -vlnv xilinx.com:ip:axi_vip:1.1 axi_vip_0
 set_property -dict [list CONFIG.PROTOCOL.VALUE_SRC USER] [get_bd_cells axi_vip_0]
@@ -50,6 +52,8 @@ connect_bd_net [get_bd_ports aclk] [get_bd_pins axi_vip_0/aclk]
 connect_bd_net [get_bd_ports aresetn] [get_bd_pins axi_vip_0/aresetn]
 connect_bd_net [get_bd_ports aclk] [get_bd_pins axi4_lite_0/aclk]
 connect_bd_net [get_bd_ports aresetn] [get_bd_pins axi4_lite_0/aresetn]
+connect_bd_intf_net [get_bd_intf_pins axi4_lite_0/s_axi] [get_bd_intf_pins axi_vip_0/M_AXI]
 
 assign_bd_address
 validate_bd_design
+save_bd_design

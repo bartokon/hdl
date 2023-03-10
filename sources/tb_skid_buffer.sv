@@ -25,7 +25,7 @@ logic rst_clk_ni = 0;
 logic [DATA_SIZE-1:0] q_output[$];
 logic [DATA_SIZE-1:0] q_input[$];
 
-design_1_wrapper u0_axi4_stream_wips (
+design_1 u0_axi4_stream_wips (
     .clk_i,
     .rst_clk_ni,
     .M_AXIS_0_tvalid(data_valid_i),
@@ -129,8 +129,8 @@ end
     design_1_axi4stream_vip_0_1_slv_t slv_agent;
 
 initial begin
-    mst_agent = new("master vip agent", u0_axi4_stream_wips.design_1_i.axi4stream_vip_master_0.inst.IF);
-    slv_agent = new("slave vip agent",  u0_axi4_stream_wips.design_1_i.axi4stream_vip_slave_0.inst.IF);
+    mst_agent = new("master vip agent", u0_axi4_stream_wips.axi4stream_vip_master_0.inst.IF);
+    slv_agent = new("slave vip agent",  u0_axi4_stream_wips.axi4stream_vip_slave_0.inst.IF);
 
     mst_agent.vif_proxy.set_dummy_drive_type(XIL_AXI4STREAM_VIF_DRIVE_NONE);
     slv_agent.vif_proxy.set_dummy_drive_type(XIL_AXI4STREAM_VIF_DRIVE_NONE);
