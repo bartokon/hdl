@@ -23,6 +23,8 @@ add_files -fileset sources_1 "\
     ${hdl_sources_paths}/axi4_lite_write_manager_v2.sv \
     ${hdl_sources_paths}/axi4_lite_v2.sv \
     ${hdl_sources_paths}/axi4_lite_v2_wrapper.v \
+    ${hdl_sources_paths}/skid_buffer.sv \
+    ${hdl_sources_paths}/skid_buffer_wrapper.v \
     " \
 -norecurse
 
@@ -34,6 +36,8 @@ add_files -fileset sim_1 "\
 set_property top tb_axi4_lite_write [get_filesets sim_1]
 set_property top_lib xil_defaultlib [get_filesets sim_1]
 update_compile_order -fileset sim_1
+
+start_gui
 
 #Create_bd
 create_bd_design "design_1"

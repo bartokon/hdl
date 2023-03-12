@@ -1,115 +1,79 @@
-`timescale 1ns / 1ps
-`default_nettype none
+//`timescale 1ns / 1ps
+//`default_nettype none
 
-module axi_lite_write_manager
-#(
-    parameter ADDRESS_SIZE = 32,
-    parameter DATA_SIZE = 32 
-)
-(
+module axi4_lite_write_manager #(
+    parameter ADDRESS_SIZE = 4,
+    parameter DATA_SIZE = 32,
+    parameter REGISTERS = 1
+) (
     //Write port
-    input wire [ADDRESS_SIZE - 1 : 0] write_address,
-    input wire write_address_valid,
-    output wire write_address_ready,
+    input logic [ADDRESS_SIZE-1 : 0] write_address_i,
+    input logic write_address_valid_i,
+    output logic write_address_ready_o,
 
-    input wire [DATA_SIZE - 1 :0] write_data,
-    input wire [(DATA_SIZE / 8) - 1 :0] write_data_strobe, //Indicates what bytes of data are valid - 1 bit for each byte in write_data
-    input wire write_data_valid,
-    output wire write_data_ready,
+    input logic [DATA_SIZE-1:0] write_data_i,
+    input logic [(DATA_SIZE/8)-1:0] write_data_strobe_i, //Indicates what bytes of data are valid - 1 bit for each byte in write_data
+    input logic write_data_valid_i,
+    output logic write_data_ready_o,
 
     //Write port response
-    output wire [1 : 0] write_response, //2bit
-    output wire write_response_valid,
-    input wire write_response_ready,
-    
+    output logic [1 : 0] write_response_o, //2bit
+    output logic write_response_valid_o,
+    input logic write_response_ready_i,
+
     //Misc
-    input wire aclk,
-    input wire aresetn,
-    
-    output reg [DATA_SIZE - 1 :0] register_data_0,
-    output reg register_write_enable_0
+    input logic clk_i,
+    input logic rst_clk_i,
+
+    output logic [DATA_SIZE-1 :0] register_data_o,
+    output logic [ADDRESS_SIZE-1:0] register_address_o,
+    output logic enable_register_data_o
 );
-    localparam [1:0] RESET = 2'b00;
-    localparam [1:0] FETCH = 2'b01;
-    localparam [1:0] WRITE = 2'b10;
-    localparam [1:0] RESPONSE = 2'b11;
-    
-    reg [1:0] STATE = RESET;
-    reg write_address_ready_reg = 0;
-    reg write_data_ready_reg = 0;
-    reg [1:0] write_response_reg = 0;
-    reg write_response_valid_reg = 0;
-    reg [ADDRESS_SIZE - 1 : 0] write_address_reg = 0;
-    reg [DATA_SIZE - 1 : 0] write_data_reg = 0;
-    reg write_address_locked = 0;
-    reg write_data_locked = 0;
-                        
-    assign write_data_ready = write_data_ready_reg;
-    assign write_address_ready = write_address_ready_reg;
-    assign write_response = write_response_reg;
-    assign write_response_valid = write_response_valid_reg;
-     
-    always @(posedge aclk) begin 
-        if (aresetn == 0) begin 
-            STATE <= RESET;
-        end else begin 
-            case (STATE)
-                RESET: begin 
-                    write_address_ready_reg <= 1;
-                    write_data_ready_reg <= 1;
-                    write_response_reg <= 0;
-                    write_response_valid_reg <= 0;
-                    write_data_reg <= 0;
-                    write_address_locked <= 0;
-                    write_data_locked <= 0;
-                    register_data_0 <= 0;
-                    register_write_enable_0 <= 0; 
-                    STATE <= FETCH;
-                end
-                FETCH: begin 
-                //TODO: Could be merged for one less clock cycle
-                    if (write_address_ready_reg && write_address_valid) begin 
-                        write_address_reg <= write_address;
-                        write_address_ready_reg <=0;
-                        write_address_locked <= 1;
-                    end
-                    if (write_data_ready_reg && write_data_valid) begin 
-                        write_data_reg <= write_data;
-                        write_data_ready_reg <= 0;
-                        write_data_locked <= 1;
-                    end
-                    if (write_address_locked && write_data_locked) begin 
-                        write_address_locked <= 0;
-                        write_data_locked <= 0;
-                        STATE <= WRITE;
-                    end
-                end
-                WRITE: begin 
-                //Todo: Add last n bits addres-range checking
-                //Addresing is global space!
-                //Xilinx minimum address space is 128 so last n bits for addressing internal register should be taken into account!
-                    if (write_address_reg[3:0] == 0) begin 
-                        register_data_0 <= write_data_reg;
-                        register_write_enable_0 <= 1;
-                        write_response_reg <= 2'b00; //GOOD WRITE
-                    end else begin 
-                        write_response_reg <= 2'b10; // Error wrong write address SLVERR
-                    end
-                    STATE <= RESPONSE;
-                    write_response_valid_reg <= 1;            
-                end
-                RESPONSE: begin
-                    register_write_enable_0 <= 0; 
-                    if (write_response_valid_reg && write_response_ready) begin 
-                        write_address_ready_reg <=1;
-                        write_data_ready_reg <= 1;
-                        write_response_valid_reg <= 0;
-                        STATE <= FETCH;
-                    end
-                end
-            endcase
+
+    //Get address logic
+    //logic write_ready_q;
+    logic [ADDRESS_SIZE-1:0] write_address_q;
+    logic [DATA_SIZE-1:0] write_data_q;
+
+    logic write_ready, write_ready_q;
+    assign write_ready = (write_address_ready_o && write_address_valid_i) && (write_data_ready_o && write_data_valid_i);
+    assign write_data_ready_o = write_response_ready_i && (write_address_valid_i && write_data_valid_i);
+    assign write_address_ready_o = write_response_ready_i && (write_address_valid_i && write_data_valid_i);
+
+    always_ff @(posedge clk_i) begin
+        if (rst_clk_i == 0) begin
+            write_address_q <= 0;
+            write_data_q <= 0;
+            write_ready_q <= 0;
+        end else begin
+            write_ready_q <= write_ready;
+            if (write_ready) begin
+                write_address_q <= write_address_i;
+                write_data_q <= write_data_i;
+            end
         end
     end
 
+    logic [1:0] write_response_q;
+    logic write_response_valid_q;
+    logic [ADDRESS_SIZE-1:0] register_number;
+    always_comb begin
+        register_number = (write_address_q / 4);
+        register_data_o = write_data_q;
+        register_address_o = register_number;
+        enable_register_data_o = (register_number < REGISTERS) ? write_ready_q : 0;
+        write_response_valid_q = write_ready_q;
+        write_response_q = (register_number < REGISTERS) ? 2'b00 : 2'b10;
+    end
+
+    always_ff @(posedge clk_i) begin
+        if (rst_clk_i == 0) begin
+            write_response_o <= 0;
+            write_response_valid_o <= 0;
+        end else begin
+            write_response_o <= write_response_q;
+            write_response_valid_o <= write_response_valid_q;
+        end
+    end
 
 endmodule

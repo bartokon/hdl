@@ -2,7 +2,8 @@
 
 module axi4_lite_read_manager #(
     parameter ADDRESS_SIZE = 32,
-    parameter DATA_SIZE = 32
+    parameter DATA_SIZE = 32,
+    parameter REGISTERS = 1
 ) (
     //Read port
     input logic [ADDRESS_SIZE-1:0] read_address_i,
@@ -19,7 +20,8 @@ module axi4_lite_read_manager #(
     input logic clk_i,
     input logic rst_clk_ni,
 
-    input logic [DATA_SIZE-1:0] register_data_0_i
+    input logic [DATA_SIZE-1:0] register_data_i,
+    output logic [ADDRESS_SIZE-1:0] register_address_o
 );
 
     logic stall;
@@ -39,17 +41,12 @@ module axi4_lite_read_manager #(
 
     logic [DATA_SIZE-1:0] register_data_q, register_data_d;
     logic [1:0] read_data_response_q;
+    logic [ADDRESS_SIZE-1:0] register_number;
     always_comb begin: address_decode
-        read_data_response_q = 2'b00;
-        case (read_address_q)
-        0: begin
-            register_data_q = register_data_0_i;
-        end
-        default: begin
-            read_data_response_q = 2'b10;
-            register_data_q = register_data_d;
-        end
-    endcase
+        register_number = read_address_q / 4;
+        register_address_o = register_number;
+        register_data_q = register_number < REGISTERS ? register_data_i : read_data_o;
+        read_data_response_q = register_number < REGISTERS ? 2'b00 : 2'b10;
     end
 
     always_ff @(posedge clk_i) begin

@@ -11,7 +11,7 @@ module tb_axi4_lite_write;
     logic [31:0] base_addr = 0;
     logic [1:0] resp = 0;
     logic [31:0] data = 0;
-
+    
     design_1 DUT
     (
         .aclk (aclk),
@@ -39,33 +39,20 @@ module tb_axi4_lite_write;
 
         //Wait for reset release
         wait (aresetn == 1'b1);
-
-        // 0 is prot (Not used)
+   
         #10ns
         fork
-            addr = 0;
-            data = 32'hdeadbeef;
-            master_agent.AXI4LITE_WRITE_BURST(base_addr + addr, 0, data, resp);
-            addr = 4;
-            data = 32'h00000001;
-            master_agent.AXI4LITE_WRITE_BURST(base_addr + addr, 0, data, resp);
-            addr = 8;
-            data = 32'h00000002;
-            master_agent.AXI4LITE_WRITE_BURST(base_addr + addr, 0, data, resp);
-        
-    //      #50ns
-            addr = 0;
-            master_agent.AXI4LITE_READ_BURST(base_addr + addr, 0, data, resp);
-            $display("Data is %h", data);
-            addr = 4;
-            master_agent.AXI4LITE_READ_BURST(base_addr + addr, 0, data, resp);
-            $display("Data is %h", data);
-            addr = 8;
-            master_agent.AXI4LITE_READ_BURST(base_addr + addr, 0, data, resp);
-            $display("Data is %h", data);
+            for (int i = 0, addr = 0, data = 0; i < DUT.axi4_lite_wrapper_v2_0.inst.REGISTERS + 1; ++i, ++data, addr = addr + 4) begin 
+                master_agent.AXI4LITE_WRITE_BURST(base_addr + addr, 0, data, resp);
+            end
+        join  
+        fork
+            for (int i = 0, addr = 0, data = 0; i < DUT.axi4_lite_wrapper_v2_0.inst.REGISTERS + 1; ++i, addr = addr + 4) begin
+                master_agent.AXI4LITE_READ_BURST(base_addr + addr, 0, data, resp);
+                $display("Data is %h", data);
+            end
         join
-        #20ns
-        $finish("Simulation Finished");
+        #10ns $finish("Simulation Finished");
     end
 
 endmodule
