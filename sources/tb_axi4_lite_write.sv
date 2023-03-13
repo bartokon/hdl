@@ -11,6 +11,10 @@ module tb_axi4_lite_write;
     logic [31:0] base_addr = 0;
     logic [1:0] resp = 0;
     logic [31:0] data = 0;
+    logic [31:0] data_in[$];
+    logic [31:0] addr_in[$];
+    logic [31:0] data_out[$];
+    logic [31:0] addr_out[$];
     
     design_1 DUT
     (
@@ -23,7 +27,7 @@ module tb_axi4_lite_write;
     initial begin
         //Assert the reset
         aresetn = 0;
-        #10ns
+        #100ns
         // Release the reset
         aresetn = 1;
     end
@@ -41,17 +45,29 @@ module tb_axi4_lite_write;
         wait (aresetn == 1'b1);
    
         #10ns
-        fork
-            for (int i = 0, addr = 0, data = 0; i < DUT.axi4_lite_wrapper_v2_0.inst.REGISTERS + 1; ++i, ++data, addr = addr + 4) begin 
-                master_agent.AXI4LITE_WRITE_BURST(base_addr + addr, 0, data, resp);
+        for (int i = 0, addr = 0, data = 0; i < DUT.axi4_lite_wrapper_v2_0.inst.REGISTERS + 0; ++i, ++data, addr = addr + 4) begin        
+            master_agent.AXI4LITE_WRITE_BURST(base_addr + addr, 0, data, resp);
+            data_in.push_back(data);
+            addr_in.push_back(addr);
+            wait(DUT.axi4_lite_wrapper_v2_0.s_axi_bvalid && DUT.axi4_lite_wrapper_v2_0.s_axi_bready);
+            master_agent.AXI4LITE_READ_BURST(base_addr + addr, 0, data, resp);
+            data_out.push_back(data);
+            addr_out.push_back(addr);
+            $display("Data is %h", data);
+        end
+        
+        assert(data_out.size() == data_in.size());
+        assert(addr_out.size() == addr_in.size());
+        
+        for (int i = 0; i < data_out.size(); ++i) begin
+            int err = 0;
+            err += data_out.pop_back() != data_in.pop_back();
+            err += addr_out.pop_back() != addr_in.pop_back();
+            if (err == 1) begin 
+                $error("Data missmatch");
+                $stop("on i: %d", i);
             end
-        join  
-        fork
-            for (int i = 0, addr = 0, data = 0; i < DUT.axi4_lite_wrapper_v2_0.inst.REGISTERS + 1; ++i, addr = addr + 4) begin
-                master_agent.AXI4LITE_READ_BURST(base_addr + addr, 0, data, resp);
-                $display("Data is %h", data);
-            end
-        join
+        end
         #10ns $finish("Simulation Finished");
     end
 
