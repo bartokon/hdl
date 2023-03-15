@@ -11,7 +11,7 @@ module axi4_lite_read_manager #(
     output logic read_address_ready_o,
 
     //Read port response
-    output logic [1:0] read_data_response_o, //2bit
+    output logic [1:0] read_data_response_o,
     output logic [DATA_SIZE-1:0] read_data_o,
     output logic read_data_valid_o,
     input logic read_data_ready_i,
@@ -39,19 +39,19 @@ module axi4_lite_read_manager #(
         end
     end
 
-    logic [DATA_SIZE-1:0] register_data_q, register_data_d;
+    logic [DATA_SIZE-1:0] register_data_q;
     logic [1:0] read_data_response_q;
     logic [ADDRESS_SIZE-1:0] register_number;
     always_comb begin: address_decode
         register_number = read_address_q / 4;
         register_address_o = register_number;
-        register_data_q = register_number < REGISTERS ? register_data_i : read_data_o;
+        register_data_q = register_number < REGISTERS
+            ? register_data_i : read_data_o;
         read_data_response_q = register_number < REGISTERS ? 2'b00 : 2'b10;
     end
 
     always_ff @(posedge clk_i) begin
         if (rst_clk_ni == 0) begin
-            register_data_d <= 0;
             stall <= 0;
             read_data_o <= 0;
             read_data_response_o <= 0;

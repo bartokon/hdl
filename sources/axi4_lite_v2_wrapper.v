@@ -1,9 +1,9 @@
 `default_nettype none
 
 module axi4_lite #(
-    parameter integer ADDRESS_SIZE = 4,
+    parameter integer ADDRESS_SIZE = 5,
     parameter integer DATA_SIZE = 32,
-    parameter integer REGISTERS = 64
+    parameter integer REGISTERS = 8
 ) (
     //Read port
     input wire [ADDRESS_SIZE-1:0] s_axi_araddr,
@@ -28,8 +28,7 @@ module axi4_lite #(
     output wire s_axi_wready,
 
     //Write port response
-    //(* keep="true" *)
-    output wire [1:0] s_axi_bresp, //2bit
+    output wire [1:0] s_axi_bresp,
     output wire s_axi_bvalid,
     input wire s_axi_bready,
 
@@ -37,7 +36,6 @@ module axi4_lite #(
     input wire aclk,
     input wire aresetn
 );
-   //(* keep_hierarchy="yes" *)
     wire [ADDRESS_SIZE-1:0]s_axi_araddr_q;
     wire s_axi_arvalid_q;
     wire s_axi_arready_q;
@@ -57,12 +55,12 @@ module axi4_lite #(
         .clk_i(aclk),
         .rst_clk_ni(aresetn)
     );
-    
+
     wire [DATA_SIZE-1:0] s_axi_rdata_q;
     wire [1:0] s_axi_rresp_q;
     wire s_axi_rvalid_q;
     wire s_axi_rready_q;
-    
+
     skid_buffer #(
         .DATA_SIZE(DATA_SIZE+2)
     ) u0_rd_skid_buffer (
@@ -78,7 +76,7 @@ module axi4_lite #(
         .clk_i(aclk),
         .rst_clk_ni(aresetn)
     );
-    
+
     axi4_lite_v2 #(
         .ADDRESS_SIZE(ADDRESS_SIZE),
         .DATA_SIZE(DATA_SIZE),
@@ -92,7 +90,7 @@ module axi4_lite #(
         .s_axi_rvalid(s_axi_rvalid_q),
         .s_axi_rready(s_axi_rready_q),
         .s_axi_rresp(s_axi_rresp_q),
-        
+
         //
         .s_axi_awaddr(s_axi_awaddr_q),
         .s_axi_awvalid(s_axi_awvalid_q),
@@ -111,7 +109,7 @@ module axi4_lite #(
         .aresetn(aresetn)
     );
 
-    //aw 
+    //aw
     wire [ADDRESS_SIZE-1:0]s_axi_awaddr_q;
     wire s_axi_awvalid_q;
     wire s_axi_awready_q;
@@ -131,7 +129,7 @@ module axi4_lite #(
         .clk_i(aclk),
         .rst_clk_ni(aresetn)
     );
-    
+
     //wdata
     wire [DATA_SIZE-1:0] s_axi_wdata_q;
     wire [(DATA_SIZE/8)-1:0] s_axi_wstrb_q;
@@ -142,7 +140,7 @@ module axi4_lite #(
         .DATA_SIZE(DATA_SIZE + (DATA_SIZE/8))
     ) u0_wdata_skid_buffer (
         // Input ports
-        .data_i({s_axi_wdata, s_axi_wstrb}), // ADD: s_axi_wstrb
+        .data_i({s_axi_wdata, s_axi_wstrb}),
         .data_valid_i(s_axi_wvalid),
         .data_ready_o(s_axi_wready),
         // Output ports
@@ -153,12 +151,12 @@ module axi4_lite #(
         .clk_i(aclk),
         .rst_clk_ni(aresetn)
     );
-    
+
     //Bresp
     wire [1:0] s_axi_bresp_q;
     wire s_axi_bvalid_q;
     wire s_axi_bready_q;
-    
+
     skid_buffer #(
         .DATA_SIZE(2)
     ) u0_br_skid_buffer (
@@ -174,5 +172,5 @@ module axi4_lite #(
         .clk_i(aclk),
         .rst_clk_ni(aresetn)
     );
-    
+
 endmodule
