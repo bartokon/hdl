@@ -1,0 +1,7 @@
+`include "uvm_sequence_item.sv"
+`include "uvm_sequence.sv"
+`include "uvm_driver.sv"
+`include "uvm_monitor.sv"
+`include "uvm_scoreboard.sv"
+`include "uvm_agent.sv"
+`include "uvm_environment.sv"

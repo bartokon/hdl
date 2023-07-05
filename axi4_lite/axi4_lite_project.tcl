@@ -19,8 +19,8 @@ set hdl_sources_paths "[file normalize "$origin_dir/../sources/."]"
 set bd_tcl_paths "[file normalize "$origin_dir/../sources/."]"
 
 add_files -fileset sources_1 "\
-    ${hdl_sources_paths}/axi_lite_read_manager.v \
-    ${hdl_sources_paths}/axi_lite_write_manager.v \
+    ${hdl_sources_paths}/axi4_lite_read_manager.v \
+    ${hdl_sources_paths}/axi4_lite_write_manager.v \
     ${hdl_sources_paths}/axi4_lite.v \
     " \
 -norecurse
