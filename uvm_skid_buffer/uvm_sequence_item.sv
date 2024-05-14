@@ -1,32 +1,24 @@
-//Reg item same for M and S port
-//Reg item should have handshake ports?
-//TODO: make one class from this packets
-class m_reg_item extends uvm_sequence_item;
+`ifndef UVM_SEQUENCE_ITEM
+`define UVM_SEQUENCE_ITEM
+
+import uvm_pkg::*;
+`include "uvm_macros.svh"
+
+class sequence_item extends uvm_sequence_item;
+
     rand bit [8 - 1 : 0] data;
-    `uvm_object_utils_begin(m_reg_item)
-        `uvm_field_int (data, UVM_DEFAULT);
-    `uvm_object_utils_end
-
-    virtual function string convert2str();
-        return $sformat("data = 0x%0h", data);
-    endfunction
-
-    function new(string name = "m_reg_item");
+    rand bit resetn;
+    
+    `uvm_object_utils(sequence_item)
+    function new(input string name = "sequence_item");
         super.new(name);
     endfunction
+
+    virtual function void do_print(uvm_printer printer);
+        super.do_print(printer);
+        printer.print_field_int("data from item: ", data, $bits(data), UVM_HEX);
+    endfunction
+    
 endclass
 
-class s_reg_item extends uvm_sequence_item;
-    rand bit [8 - 1 : 0] data;
-    `uvm_object_utils_begin(s_reg_item)
-        `uvm_field_int (data, UVM_DEFAULT);
-    `uvm_object_utils_end
-
-    virtual function string convert2str();
-        return $sformat("data = 0x%0h", data);
-    endfunction
-
-    function new(string name = "s_reg_item");
-        super.new(name);
-    endfunction
-endclass
+`endif

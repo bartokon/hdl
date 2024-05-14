@@ -1,45 +1,60 @@
-`uvm_analysis_imp_decl(_m)
-`uvm_analysis_imp_decl(_s)
+`ifndef UVM_SCOREBOARD
+`define UVM_SCOREBOARD
+
+import uvm_pkg::*;
+`include "uvm_macros.svh"
+`include "uvm_sequence_item.sv"
+
+//Where?
+`uvm_analysis_imp_decl(_master_port)
+`uvm_analysis_imp_decl(_slave_port)
 
 class scoreboard extends uvm_scoreboard;
 
+    uvm_analysis_imp_master_port #(sequence_item, scoreboard) scoreboard_master_port;
+    uvm_analysis_imp_slave_port #(sequence_item, scoreboard) scoreboard_slave_port;
+    
+    sequence_item m_item_q[$];
+    sequence_item s_item_q[$];
+
     `uvm_component_utils(scoreboard)
-    function new(string name="scoreboard", uvm_component parent=null);
+    function new(input string name="scoreboard", input uvm_component parent = null);
         super.new(name, parent);
     endfunction
-    
-    uvm_analysis_imp_m #(m_reg_item, scoreboard) m_analysis_imp;
-    uvm_analysis_imp_s #(s_reg_item, scoreboard) s_analysis_imp;
-    m_reg_item m_item_q[$];
-    s_reg_item s_item_q[$];
 
-    virtual function void build_phase(uvm_phase phase);
+    virtual function void build_phase(input uvm_phase phase);
         super.build_phase(phase);
-        m_analysis_imp = new("m_analysis_imp", this);
-        s_analysis_imp = new("s_analysis_imp", this);
+        scoreboard_master_port = new("scoreboard_master_port", this);
+        scoreboard_slave_port = new("scoreboard_slave_port", this);
     endfunction
 
-    //Write to m port
-    virtual function write_m(m_reg_item item);
-        `uvm_info(get_type_name(), $sformatf("M_REG: Scoreboard got: 0x%h", item.data), UVM_LOW)
+    virtual function void write_master_port(input sequence_item item);
+        `uvm_info(get_type_name(), $sformatf("Scoreboard got: 0x%h", item.data), UVM_LOW)
         m_item_q.push_back(item);
     endfunction
 
-    //Write to s port
-    virtual function write_s(s_reg_item item);
-        `uvm_info(get_type_name(), $sformatf("S_REG: Scoreboard got: 0x%h", item.data), UVM_LOW)
+    virtual function void write_slave_port(input sequence_item item);
+        `uvm_info(get_type_name(), $sformatf("Scoreboard got: 0x%h", item.data), UVM_LOW)
         s_item_q.push_back(item);
     endfunction
 
-    //Check realtime for errors
-    task run_phase(uvm_phase phase);
-        if (m_item_q.size() != 0 && s_item_q.size() != 0) begin
-            m_reg_item master_d = m_item_q.pop_front();
-            s_reg_item slave_d = s_item_q.pop_front();
-            if (master_d.data != slave_d.data) begin 
-                $display("Test failed. Data doesn't match! \n");
-                $stop();
-            end
+    virtual task run_phase(input uvm_phase phase);
+        forever begin
+            wait(m_item_q.size() != 0);
+            wait(s_item_q.size() != 0);
+            `uvm_info( \
+                get_type_name(), \
+                $sformatf("Scoreboard master poped item: 0x%h", m_item_q.pop_front()), \
+                UVM_LOW \
+            )
+            `uvm_info( \
+                get_type_name(), \
+                $sformatf("Scoreboard slave poped item: 0x%h", s_item_q.pop_front()), \
+                UVM_LOW \
+            )
         end
     endtask
+
 endclass
+
+`endif

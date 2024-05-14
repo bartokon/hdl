@@ -1,68 +1,96 @@
-class m_driver extends uvm_driver#(m_reg_item);
-    `uvm_component_utils(m_driver)
-    function new(string name = "m_driver", uvm_component parent = null);
+`ifndef UVM_DRIVER
+`define UVM_DRIVER
+
+import uvm_pkg::*;
+`include "uvm_macros.svh"
+`include "uvm_sequence_item.sv"
+`include "interface.sv"
+
+class axi4_stream_driver #(string interface_name = "") extends uvm_driver #(sequence_item);
+
+    virtual axi4_stream vif;
+    sequence_item item;
+
+    `uvm_component_utils(axi4_stream_driver#(.interface_name(interface_name)))
+    function new(input string name = "axi4_stream_driver", uvm_component parent = null);
         super.new(name, parent);
     endfunction
 
-    virtual axi4_stream_master vif;
-
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-            if (!uvm_config_db#(virtual axi4_stream_master)::get(this, "", "axi4_stream_master", vif)) begin 
-                `uvm_fatal("DRV", "Could not get vif");
-            end    
-    endfunction
-
-    virtual task run_phase(uvm_phase phase);
-        super.run_phase(phase);
-            forever begin 
-                m_reg_item m_item;
-                `uvm_info("DRV", $sformatf("Wait fori tem from sequencer"), UVM_LOW);
-                //Is seq_item_port standard connection?
-                seq_item_port.get_next_item(m_item);
-                drive_item(m_item);
-                seq_item_port_item_done();
+            if (!uvm_config_db#(virtual axi4_stream)::get(this, "", interface_name, vif)) begin
+                `uvm_fatal("DRV", "Could not get axi4_stream vif");
             end
-    endtask
-
-    virtual task drive_item(m_reg_item m_item);
-        vif.data <= m_item.data;
-        vif.valid <= 1;
-        @(posedge vif.clk) begin 
-            while (!vif.ready) begin 
-                `uvm_info("M_DRV", "Wait until ready is high", UVM_LOW);
-                @(posedge vif.clk);
-            end
-        end
-        @(negedge vif.clk) begin 
-            vif.valid <= 0;
-        end
-    endtask
-    
-endclass
-
-class s_driver extends uvm_driver#(s_reg_item);
-    `uvm_component_utils(s_driver)
-    function new(string name = "s_driver", uvm_component parent = null);
-        super.new(name, parent);
-    endfunction
-
-    virtual axi4_stream_slave vif;
-
-    virtual function void build_phase(uvm_phase phase);
-        super.build_phase(phase);
-            if (!uvm_config_db#(virtual axi4_stream_slave)::get(this, "", "axi4_stream_slave", vif)) begin 
-                `uvm_fatal("S_DRV", "Could not get vif");
-            end    
+            item = sequence_item::type_id::create("sequence_item");
     endfunction
 
     virtual task run_phase(uvm_phase phase);
         super.run_phase(phase);
             forever begin
-                @(posedge vif.clk) begin
-                    vif.ready <= $random % 1; //Should be 0 or 1
-                end
+                `uvm_info("DRV", $sformatf("Wait for item from sequencer"), UVM_LOW);
+                seq_item_port.get_next_item(item);
+                 `uvm_info("DRV", $sformatf("Got item from sequencer"), UVM_LOW);
+                drive_item(item);
+                 `uvm_info("DRV", $sformatf("Wait for next item from sequencer"), UVM_LOW);
+                seq_item_port.item_done();
             end
+    endtask
+
+    virtual task drive_item(sequence_item item);
     endtask
     
 endclass
+
+class axi4_stream_master_driver #(string interface_name = "") extends axi4_stream_driver #(.interface_name(interface_name));
+
+    `uvm_component_utils(axi4_stream_master_driver #(.interface_name(interface_name)))
+    function new(input string name = "axi4_stream_master_driver", uvm_component parent = null);
+        super.new(name, parent);
+    endfunction
+
+    virtual function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+    endfunction
+    
+    virtual task drive_item(sequence_item item);
+        vif.data <= item.data;
+        vif.rstn <= item.resetn;
+        vif.valid <= 1;
+        @(posedge vif.clk)
+        wait (vif.ready && vif.valid);
+//            while (!vif.ready) begin
+//                `uvm_info("axi4_stream_master driver", "Wait until ready is high", UVM_LOW);
+//                @(posedge vif.clk);
+//            end
+        @(negedge vif.clk);
+        vif.valid <= 0;
+        vif.data <= 0;
+    endtask
+
+endclass
+
+class axi4_stream_slave_driver #(string interface_name = "") extends axi4_stream_driver #(.interface_name(interface_name));
+
+    `uvm_component_utils(axi4_stream_slave_driver #(.interface_name(interface_name)))
+    function new(input string name = "axi4_stream_slave_driver", uvm_component parent = null);
+        super.new(name, parent);
+    endfunction
+
+    virtual function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+        vif.ready <= 0;
+    endfunction
+    
+    virtual task drive_item(sequence_item item);
+        vif.ready <= 1;
+        @(posedge vif.clk);
+        wait (vif.ready && vif.valid);
+//        while (!vif.valid) begin
+//            `uvm_info("axi4_stream_slave_driver", "Wait until valid is high", UVM_LOW);
+//        end     
+        @(negedge vif.clk);
+        vif.ready <= 0;
+    endtask
+
+endclass
+`endif

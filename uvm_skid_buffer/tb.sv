@@ -7,12 +7,11 @@ import uvm_pkg::*;
 module tb;
 
     reg clk = 0;
-    reg resetn = 0;
     
     always #10 clk = ~clk;
-    axi4_stream_master if_i(clk, resetn);
-    axi4_stream_slave if_o(clk, resetn); //Do i need clk?
-    //For what i have created wrapper with intf?
+
+    axi4_stream if_i(.clk(clk));
+    axi4_stream if_o(.clk(clk));
     
     skid_buffer u0 (
         // Input ports
@@ -24,13 +23,13 @@ module tb;
         .data_valid_o(if_o.valid),
         .data_ready_i(if_o.ready),
         // Misc
-        .clk_i(clk),
-        .rst_clk_ni(resetn)
+        .clk_i(if_i.clk),
+        .rst_clk_ni(if_i.rstn)
     );
-    
+  
     initial begin 
-        uvm_config_db#(virtual axi4_stream_master)::set(null, "uvm_test_top", "axi4_stream_master", if_i);
-        uvm_config_db#(virtual axi4_stream_slave)::set(null, "uvm_test_top", "axi4_stream_slave", if_o);
+        uvm_config_db#(virtual axi4_stream)::set(null, "", "axi4_stream_input", if_i);
+        uvm_config_db#(virtual axi4_stream)::set(null, "", "axi4_stream_output", if_o);
     end
     
     initial begin 

@@ -27,8 +27,6 @@ add_files -fileset sources_1 "\
 -norecurse
 
 add_files -fileset sim_1 "\
-    uvm_config.svh \
-    package.sv \
     interface.sv \
     uvm_sequence_item.sv \
     uvm_driver.sv \
@@ -38,6 +36,7 @@ add_files -fileset sim_1 "\
     uvm_environment.sv \
     uvm_test.sv \
     uvm_sequence.sv \
+    uvm_sequencer.sv \
     tb.sv \
     " \
 -norecurse
