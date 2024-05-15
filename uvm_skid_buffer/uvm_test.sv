@@ -43,18 +43,19 @@ class test extends uvm_test;
     endfunction
     
     virtual task run_phase(uvm_phase phase);
+        `uvm_info("", "Hello UVM World!", UVM_LOW)
+    endtask
+
+    virtual task main_phase(uvm_phase phase);
         phase.raise_objection(this);
-        `uvm_info("", "Hello World!", UVM_LOW)
-        `uvm_info("", "Reset Sequence!", UVM_LOW)
-        reset.start(e0.a0.s0);
-        #50 `uvm_info("", "Run Sequence!", UVM_LOW)
+        `uvm_info("", "Run Sequence!", UVM_LOW)
         fork
             run.start(e0.a0.s0);
             #50 empty.start(e0.b0.s0);
         join
         phase.drop_objection(this);
     endtask
-
+    
 endclass
 
 `endif

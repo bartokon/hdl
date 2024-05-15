@@ -31,7 +31,7 @@ class axi4_stream_monitor #(string interface_name = "") extends uvm_monitor;
         forever begin
             @(posedge vif.clk);
             if (vif.valid && vif.ready) begin
-                `uvm_info(get_type_name(), $sformatf("master monitor found packet: %x", vif.data), UVM_LOW);
+                `uvm_info(get_type_name(), $sformatf("monitor found packet: %x", vif.data), UVM_LOW);
                 item.data <= vif.data;
                 monitor_port.write(item);
             end
