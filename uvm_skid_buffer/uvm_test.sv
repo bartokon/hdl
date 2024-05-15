@@ -15,9 +15,8 @@ class test extends uvm_test;
         .axi4_stream_master_port(this.axi4_stream_master_port),
         .axi4_stream_slave_port(this.axi4_stream_slave_port)
     ) e0;
-    reset_sequence reset;
     run_sequence run;
-    empty_sequence empty;
+    delay_sequence delay;
     
     `uvm_component_utils(test)
     function new(
@@ -33,9 +32,8 @@ class test extends uvm_test;
             .axi4_stream_master_port(this.axi4_stream_master_port),
             .axi4_stream_slave_port(this.axi4_stream_slave_port)
         )::type_id::create("e0", this);
-        reset = reset_sequence::type_id::create("reset");
         run = run_sequence::type_id::create("run");
-        empty = empty_sequence::type_id::create("empty");
+        delay = delay_sequence::type_id::create("delay");
     endfunction
         
     virtual function void end_of_elaboration_phase(uvm_phase phase);
@@ -48,11 +46,13 @@ class test extends uvm_test;
 
     virtual task main_phase(uvm_phase phase);
         phase.raise_objection(this);
-        `uvm_info("", "Run Sequence!", UVM_LOW)
-        fork
-            run.start(e0.a0.s0);
-            #50 empty.start(e0.b0.s0);
-        join
+        repeat (8) begin
+            `uvm_info("", "Run Sequence!", UVM_LOW)
+            fork
+                run.start(e0.a0.s0);
+                delay.start(e0.b0.s0);
+            join
+        end
         phase.drop_objection(this);
     endtask
     

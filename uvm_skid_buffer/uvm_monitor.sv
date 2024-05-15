@@ -31,12 +31,25 @@ class axi4_stream_monitor #(string interface_name = "") extends uvm_monitor;
         forever begin
             @(posedge vif.clk);
             if (vif.valid && vif.ready) begin
-                `uvm_info(get_type_name(), $sformatf("monitor found packet: %x", vif.data), UVM_LOW);
-                item.data <= vif.data;
+                item.data = vif.data;
+                `uvm_info(get_type_name(), $sformatf("monitor found packet: %x", item.data), UVM_LOW);
                 monitor_port.write(item);
             end
         end
     endtask
+    
+//    virtual task main_phase(uvm_phase phase);
+//        super.main_phase(phase);
+//        forever begin
+//            @(posedge vif.clk);
+//            if (vif.valid && vif.ready) begin
+//                `uvm_info(get_type_name(), $sformatf("monitor found packet: %x", vif.data), UVM_LOW);
+//                item.data <= vif.data;
+//                monitor_port.write(item);
+//            end
+//        end
+//    endtask
+    
 endclass
 
 `endif

@@ -31,21 +31,21 @@ class scoreboard extends uvm_scoreboard;
     endfunction
 
     virtual function void write_master_port(input sequence_item item);
-        `uvm_info(get_type_name(), $sformatf("Scoreboard got: %x", item.data), UVM_LOW)
+        `uvm_info(get_type_name(), $sformatf("Scoreboard master port got: %x", item.data), UVM_LOW)
         m_item_q.push_back(item);
     endfunction
 
     virtual function void write_slave_port(input sequence_item item);
-        `uvm_info(get_type_name(), $sformatf("Scoreboard got: %x", item.data), UVM_LOW)
+        `uvm_info(get_type_name(), $sformatf("Scoreboard slave port got: %x", item.data), UVM_LOW)
         s_item_q.push_back(item);
     endfunction
 
     virtual task run_phase(input uvm_phase phase);
         forever begin
             wait(m_item_q.size() != 0);
-            wait(s_item_q.size() != 0);
             i_m = m_item_q.pop_front();
-            i_s = s_item_q.pop_front();
+            wait(s_item_q.size() != 0);
+            i_s = s_item_q.pop_front(); 
             `uvm_info( \
                 get_type_name(), \
                 $sformatf("Scoreboard master poped item: %x", i_m.data), \
@@ -61,6 +61,7 @@ class scoreboard extends uvm_scoreboard;
                 get_type_name(), \
                 $sformatf("Scoreboard mismatch %x vs %x", i_m.data, i_s.data) \
             )
+            $stop;
             end
         end
     endtask

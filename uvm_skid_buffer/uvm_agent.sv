@@ -36,7 +36,7 @@ class axi4_stream_slave_agent #(string interface_name = "") extends uvm_agent;
 
     axi4_stream_slave_driver #(.interface_name(interface_name)) d0;
     axi4_stream_monitor #(.interface_name(interface_name)) m0;
-    sequencer s0;
+    delay_sequencer s0;
 
     `uvm_component_utils(axi4_stream_slave_agent #(.interface_name(interface_name)))
     function new(input string name="axi4_stream_slave_agent", input uvm_component parent = null);
@@ -45,7 +45,7 @@ class axi4_stream_slave_agent #(string interface_name = "") extends uvm_agent;
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        s0 = sequencer::type_id::create("s0", this);
+        s0 = delay_sequencer::type_id::create("s0", this);
         d0 = axi4_stream_slave_driver #(.interface_name(interface_name))::type_id::create("d0", this);
         m0 = axi4_stream_monitor #(.interface_name(interface_name))::type_id::create("m0", this);
     endfunction
