@@ -25,7 +25,7 @@ class delay_sequence_item extends uvm_sequence_item;
         super.new(name);
     endfunction
     
-    constraint delay_high { delay < 1; }; 
+    constraint delay_high { delay < 10; }; 
     constraint delay_low { delay >= 0; };
     
 endclass

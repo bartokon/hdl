@@ -24,13 +24,20 @@ module axi4_stream_fifo #(
 
     logic [POINTER_WIDTH - 1 : 0] read_pointer;
     logic [POINTER_WIDTH - 1 : 0] write_pointer;
+    logic [POINTER_WIDTH - 1 : 0] write_pointer_next;
     logic [WIDTH - 1 : 0] memory [DEPTH - 1 : 0];
 
-    assign empty = (read_pointer == write_pointer);
-    assign full = ((write_pointer + 1) == read_pointer);
     assign WRITE_OPERATION = s_axis_tvalid && s_axis_tready;
     assign READ_OPERATION = m_axis_tvalid && m_axis_tready;
     assign m_axis_tdata = memory[read_pointer];
+    assign empty = (read_pointer == write_pointer);
+    assign write_pointer_next = write_pointer + 1;
+    assign full = (write_pointer_next == read_pointer);
+    
+//    always_comb begin
+//        write_pointer_next = write_pointer + 1;
+//        full = (write_pointer_next == read_pointer);
+//    end
 
     always_ff @(posedge clk) begin
         if (resetn == 0) begin
