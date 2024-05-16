@@ -1,62 +1,66 @@
+
 module axi4_stream_fifo #(
-    parameter int unsigned DATA_SIZE = 16
+    parameter WIDTH = 8,
+    parameter DEPTH = 4
 ) (
-    input  logic [DATA_SIZE - 1 : 0] data_in_tdata,
-    input  logic data_in_tvalid,
-    output logic data_in_tready,
-    output logic [DATA_SIZE - 1 : 0] data_out_tdata,
-    output logic data_out_tvalid,
-    input  logic data_out_tready,
-    input  logic clk_i,
-    input  logic clk_o,
-    input  logic rst_ni
+    input logic [WIDTH - 1 : 0] s_axis_tdata,
+    input logic s_axis_tvalid,
+    output logic s_axis_tready,
+
+    output logic [WIDTH - 1 : 0] m_axis_tdata,
+    output logic m_axis_tvalid,
+    input logic m_axis_tready,
+
+    output logic empty,
+    output logic full,
+
+    input logic clk,
+    input logic resetn
 );
+    localparam POINTER_WIDTH = $clog2(DEPTH);
 
-    // skid_buffer #(
-    //     .DATA_SIZE(DATA_SIZE)
-    // ) u0_in_skid_buffer (
-    //     // Input ports
-    //     .data_i(data_in_tdata),
-    //     .data_valid_i(data_in_tvalid),
-    //     .data_ready_o(data_in_tready),
-    //     // Output ports
-    //     .data_o(data_out_tdata),
-    //     .data_valid_o(data_out_tvalid),
-    //     .data_ready_i(data_out_tready),
-    //     // Misc
-    //     .clk_i(clk_i),
-    //     .rst_clk_ni(rst_clk_ni)
-    // );
+    logic WRITE_OPERATION;
+    logic READ_OPERATION;
 
-    // //Metastability! for rst_clk_ni
-    // skid_buffer #(
-    //     .DATA_SIZE(DATA_SIZE)
-    // ) u0_out_skid_buffer (
-    //     // Input ports
-    //     .data_i(data_in_tdata),
-    //     .data_valid_i(data_in_tvalid),
-    //     .data_ready_o(data_in_tready),
-    //     // Output ports
-    //     .data_o(data_out_tdata),
-    //     .data_valid_o(data_out_tvalid),
-    //     .data_ready_i(data_out_tready),
-    //     // Misc
-    //     .clk_i(clk_o),
-    //     .rst_clk_ni(rst_clk_ni)
-    // );
+    logic [POINTER_WIDTH - 1 : 0] read_pointer;
+    logic [POINTER_WIDTH - 1 : 0] write_pointer;
+    logic [WIDTH - 1 : 0] memory [DEPTH - 1 : 0];
 
-    dual_port_ram_fifo #(
-        .DATA_SIZE(DATA_SIZE)
-    ) u0_dual_port_ram (
-        .data_in_tdata(data_in_tdata),
-        .data_in_tvalid(data_in_tvalid),
-        .data_in_tready(data_in_tready),
-        .data_out_tdata(data_out_tdata),
-        .data_out_tvalid(data_out_tvalid),
-        .data_out_tready(data_out_tready),
-        .clk_i(clk_i),
-        .clk_o(clk_o),
-        .rst_ni(rst_ni)
-    );
+    assign empty = (read_pointer == write_pointer);
+    assign full = ((write_pointer + 1) == read_pointer);
+    assign WRITE_OPERATION = s_axis_tvalid && s_axis_tready;
+    assign READ_OPERATION = m_axis_tvalid && m_axis_tready;
+    assign m_axis_tdata = memory[read_pointer];
 
+    always_ff @(posedge clk) begin
+        if (resetn == 0) begin
+            write_pointer <= 0;
+            s_axis_tready <= 0;
+        end else begin
+            write_pointer <= write_pointer + (WRITE_OPERATION);
+            s_axis_tready <= !full;
+        end
+    end
+
+    always_ff @(posedge clk) begin
+        if (resetn == 0) begin
+            read_pointer <= 0;
+            m_axis_tvalid <= 0;
+        end else begin
+            read_pointer <= read_pointer + (READ_OPERATION);
+            m_axis_tvalid <= !empty;
+        end
+    end
+
+    always_ff @(posedge clk) begin
+        if (resetn == 0) begin
+            for (int i = 0; i < DEPTH; ++i) begin
+                memory[i] <= 0;
+            end
+        end else begin
+            if (WRITE_OPERATION) begin
+                memory[write_pointer] <= s_axis_tdata;
+            end
+        end
+    end
 endmodule

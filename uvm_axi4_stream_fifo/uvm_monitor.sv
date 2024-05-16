@@ -22,9 +22,9 @@ class axi4_stream_monitor #(string interface_name = "") extends uvm_monitor;
         if (!uvm_config_db#(virtual axi4_stream)::get(this, "", interface_name, vif)) begin
             `uvm_fatal("MON", "Could not get vif")
         end
-        monitor_port = new ("monitor_port", this);    
+        monitor_port = new ("monitor_port", this);
     endfunction
-    
+
     virtual task run_phase(uvm_phase phase);
         super.run_phase(phase);
         forever begin
@@ -37,19 +37,7 @@ class axi4_stream_monitor #(string interface_name = "") extends uvm_monitor;
             end
         end
     endtask
-    
-//    virtual task main_phase(uvm_phase phase);
-//        super.main_phase(phase);
-//        forever begin
-//            @(posedge vif.clk);
-//            if (vif.valid && vif.ready) begin
-//                `uvm_info(get_type_name(), $sformatf("monitor found packet: %x", vif.data), UVM_LOW);
-//                item.data <= vif.data;
-//                monitor_port.write(item);
-//            end
-//        end
-//    endtask
-    
+
 endclass
 
 `endif
