@@ -23,7 +23,6 @@ set bd_tcl_paths "[file normalize "$origin_dir/."]"
 
 add_files -fileset sources_1 "\
     ${hdl_sources_paths}/decoder.sv \
-    ${hdl_sources_paths}/lut.sv \
     " \
 -norecurse
 
