@@ -2,7 +2,7 @@
 set origin_dir "."
 
 # Set the project name
-set proj_name "float_add"
+set proj_name "float_add_project"
 
 # Set the block design name
 set bd_name "design_1"
@@ -23,7 +23,6 @@ set bd_tcl_paths "[file normalize "$origin_dir/../sources/."]"
 
 add_files -fileset sources_1 "\
     ${hdl_sources_paths}/float_add.sv \
-    ${hdl_sources_paths}/float_add.v \
     " \
 -norecurse
 
@@ -32,17 +31,17 @@ add_files -fileset sim_1 "\
     " \
 -norecurse
 
-set_property top tb_skid_buffer [get_filesets sim_1]
+set_property top tb_float_add [get_filesets sim_1]
 set_property top_lib xil_defaultlib [get_filesets sim_1]
 update_compile_order -fileset sim_1
 
-create_bd_design ${bd_name}
-open_bd_design ${proj_name}/${proj_name}.srcs/sources_1/bd/${bd_name}/${bd_name}.bd
+#create_bd_design ${bd_name}
+#open_bd_design ${proj_name}/${proj_name}.srcs/sources_1/bd/${bd_name}/${bd_name}.bd
 
-#Create IP's
-assign_bd_address
-validate_bd_design
-save_bd_design
+##Create IP's
+#assign_bd_address
+#validate_bd_design
+#save_bd_design
 
 # make_wrapper -files [get_files ${proj_name}/${proj_name}.srcs/sources_1/bd/${bd_name}/${bd_name}.bd] -top
 # add_files -norecurse ${proj_name}/${proj_name}.srcs/sources_1/bd/${bd_name}/hdl/design_1_wrapper.v
