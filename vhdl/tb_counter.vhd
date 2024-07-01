@@ -4,33 +4,46 @@ library work;
 
 entity tb_counter is 
     generic (
-        WIDTH : integer := 4
+        WIDTH : integer := 8
     );
 end tb_counter;
 
 architecture testbench of tb_counter is 
     signal output_binary : std_logic_vector(WIDTH - 1 downto 0) := (others => '0');
+    signal output_binary_2 : std_logic_vector(WIDTH - 1 downto 0) := (others => '0');
     signal output_gray : std_logic_vector(WIDTH - 1 downto 0) := (others => '0');
     signal clk : std_logic := '0';
     signal rst : std_logic := '1';
 begin
 
-    u0_binary_counter: entity work.counter(binary)
-    generic map (
-        WIDTH => WIDTH
-    )
-    port map (
-        output => output_binary,
-        clk => clk,
-        rst => rst
-    );
+--    u0_binary_counter: entity work.counter(binary)
+--    generic map (
+--        WIDTH => WIDTH
+--    )
+--    port map (
+--        output => output_binary,
+--        clk => clk,
+--        rst => rst
+--    );
     
-    u0_gray_counter: entity work.counter(gray)
+--    u0_gray_counter: entity work.counter(gray)
+--    generic map (
+--        WIDTH => WIDTH
+--    )
+--    port map (
+--        output => output_gray,
+--        clk => clk,
+--        rst => rst
+--    );
+    
+    u0_binary_gray_counter : entity work.counter(binary_gray)
     generic map (
         WIDTH => WIDTH
     )
     port map (
-        output => output_gray,
+        output_binary => output_binary,
+        output_binary_2 => output_binary_2,
+        output_gray => output_gray,
         clk => clk,
         rst => rst
     );
