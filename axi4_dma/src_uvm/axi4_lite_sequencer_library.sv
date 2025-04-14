@@ -31,16 +31,13 @@ class uvm_axi4_lite_random_write_sequence extends uvm_axi4_lite_base_sequence;
 
     virtual task body();
         uvm_axi4_lite_transaction item;
-        int unsigned num_txn;
-        int unsigned i = 0;
+        int unsigned num_txn = 100;
         `uvm_info("SEQ", "executing...", UVM_LOW)
-        num_txn = $urandom_range(10, 100);
-        repeat(num_txn) begin
+        for (int unsigned i = 0; i < num_txn; ++i) begin
             `uvm_create(item)
             item.randomize();
             item.addr = i * 4;
             `uvm_send(item);
-            i += 1;
         end
     endtask
 

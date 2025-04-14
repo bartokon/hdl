@@ -2,7 +2,7 @@
 `define UVM_AXI4_LITE_TRANSACTION
 
 class uvm_axi4_lite_transaction extends uvm_sequence_item;
-    rand bit [15:0]   addr;
+    rand bit [31:0]   addr;
     rand bit [31:0]   data_write;
     bit [31:0]        data_read;
 

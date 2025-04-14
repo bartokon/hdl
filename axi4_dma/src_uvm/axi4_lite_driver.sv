@@ -4,6 +4,7 @@
 class uvm_axi4_lite_driver extends uvm_driver #(uvm_axi4_lite_transaction);
     protected virtual axi4_lite_if vif;
     uvm_axi4_lite_transaction transaction;
+    int unsigned i = 0;
 
     `uvm_component_utils(uvm_axi4_lite_driver)
     uvm_analysis_port#(uvm_axi4_lite_transaction) driver_analysis_port;
@@ -39,9 +40,10 @@ class uvm_axi4_lite_driver extends uvm_driver #(uvm_axi4_lite_transaction);
         reset();
         forever begin
             seq_item_port.get_next_item(transaction);
-            `uvm_info(get_full_name(), $sformatf("TRANSACTION FROM DRIVER"), UVM_LOW);
+            `uvm_info(get_full_name(), $sformatf("TRANSACTION FROM DRIVER %d", ++i), UVM_LOW);
             `uvm_info(get_full_name(), transaction.convert2string(), UVM_LOW);
             drive();
+            seq_item_port.item_done();
         end
     endtask
 
@@ -68,7 +70,6 @@ class uvm_axi4_lite_driver extends uvm_driver #(uvm_axi4_lite_transaction);
             drive_read_address_channel();
             drive_read_data_channel();
         join
-        seq_item_port.item_done();
     endtask
 
     virtual protected task drive_write_address_channel();
