@@ -38,7 +38,7 @@ class uvm_axi4_lite_random_write_sequence extends uvm_axi4_lite_base_sequence;
         repeat(num_txn) begin
             `uvm_create(item)
             item.randomize();
-            item.addr   = i;
+            item.addr = i * 4;
             `uvm_send(item);
             i += 1;
         end

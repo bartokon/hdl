@@ -34,7 +34,7 @@ set UVM_FILES "\
     ${uvm_sources_paths}/axi4_lite_environment.sv \
     ${uvm_sources_paths}/axi4_lite_tests.sv \
     ${uvm_sources_paths}/axi4_lite_tb.sv \
-    "
+"
 
 set HDL_FILES "\
     ${hdl_sources_paths}/axi4_lite.sv \
@@ -42,7 +42,7 @@ set HDL_FILES "\
     ${hdl_sources_paths}/axi4_lite_write.sv \
     ${hdl_sources_paths}/memory.sv \
     ${hdl_sources_paths}/interfaces.sv \
-    "
+"
 
 add_files ${UVM_FILES} -norecurse
 add_files ${HDL_FILES} -norecurse
@@ -53,8 +53,28 @@ update_compile_order -fileset sim_1
 set_property source_mgmt_mode DisplayOnly [current_project]
 set_property top axi4_lite_tb.sv [current_fileset]
 foreach file [lreverse $UVM_FILES] {
-  reorder_files -after [lindex $UVM_FILES 0] $file
+    reorder_files -after [lindex $UVM_FILES 0] $file
 }
+
+set AXI_VIP_NAME "AXI4_LITE_VIP_0"
+create_ip -name axi_vip -vendor xilinx.com -library ip -version 1.1 -module_name $AXI_VIP_NAME
+set_property -dict [list \
+    CONFIG.HAS_PROT {0} \
+    CONFIG.PROTOCOL {AXI4LITE} \
+    CONFIG.ADDR_WIDTH {8} \
+] [get_ips $AXI_VIP_NAME]
+
+set AXI_VIP_NAME "AXI4_VIP_0"
+create_ip -name axi_vip -vendor xilinx.com -library ip -version 1.1 -module_name $AXI_VIP_NAME
+set_property -dict [list \
+    CONFIG.HAS_CACHE {0} \
+    CONFIG.HAS_LOCK {0} \
+    CONFIG.HAS_PROT {0} \
+    CONFIG.HAS_QOS {0} \
+    CONFIG.HAS_REGION {0} \
+    CONFIG.HAS_SIZE {1} \
+    CONFIG.SUPPORTS_NARROW {1} \
+] [get_ips $AXI_VIP_NAME]
 
 set_property USED_IN_SIMULATION 1 [get_files -all ${UVM_FILES}]
 set_property USED_IN_SYNTHESIS  0 [get_files -all ${UVM_FILES}]

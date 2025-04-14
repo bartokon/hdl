@@ -1,22 +1,23 @@
 module axi4_lite_tb;
     import uvm_pkg::*;
     import axi4_lite_package::*;
-    
+
     bit aclk = 0;
     bit arstn = 0;
-    
+
     parameter cycle = 10;
+    parameter reset_cycles_hold = 32;
     always #(cycle / 2) aclk = ~aclk;
-    initial begin 
-        #(cycle * 5) arstn = ~arstn;
+    initial begin
+        #(cycle * reset_cycles_hold) arstn = ~arstn;
     end
-    
+
     axi4_lite_if u0_axi4_lite_if (
         .aclk(aclk),
         .arstn(arstn)
     );
 
-    axi4_lite #(
+    axi4_lite_vip #(
         .DEPTH(256),
         .DATA_SIZE(32)
     )  u0_axi4_lite_dut (
@@ -30,6 +31,6 @@ module axi4_lite_tb;
     initial begin
         run_test("random_write_test");
     end
-    
+
 
 endmodule

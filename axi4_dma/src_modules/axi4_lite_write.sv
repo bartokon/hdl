@@ -28,29 +28,165 @@ module axi4_lite_write #(
     output logic [$clog2(DEPTH) - 1 : 0] register_address_o,
     output logic [DATA_SIZE / 8 - 1 : 0] enable_register_data_o
 );
-    logic state; 
-    always_ff @(posedge clk_i) begin
+
+    typedef enum logic [2:0] {
+        IDLE = 3'b001,
+        WRITE = 3'b010,
+        RESPONSE = 3'b100
+    } state_e;
+    state_e state_q, state_d;
+
+    typedef union packed {
+        enum logic [1:0] {
+            OKAY    = 2'b00,
+            EXOKAY  = 2'b01,
+            SLVERR  = 2'b10,
+            DECERR  = 2'b11
+        }           _enum;
+        logic [1:0] _code;
+    } write_response_u;
+
+    write_response_u write_response_d;
+
+    wire address_and_data_valid = write_address_valid_i && write_data_valid_i;
+    wire address_and_data_ready = write_address_ready_o && write_data_ready_o;
+    wire AND_valid_and_ready = address_and_data_valid && address_and_data_ready;
+    wire rsp_valid_and_ready = write_response_valid_o && write_response_ready_i;
+
+/*----------------------------------------------------------------------------*/
+/*                             ASSERTIONS                                     */
+/*----------------------------------------------------------------------------*/
+    always @(posedge clk_i) begin
+        if (write_address_valid_i) begin
+            assert (write_address_i % (DATA_SIZE / 8) == 0) else
+                $error("Address is not aligned to the data size");
+            assert (write_address_i < DEPTH) else
+                $error("Address is out of range");
+        end
+        if (write_data_valid_i) begin
+            assert (write_data_strb_i != 0) else
+                $error("Write strobe is not valid");
+        end
+    end
+
+/*----------------------------------------------------------------------------*/
+/*                          STATE MACHINE LOGIC                               */
+/*----------------------------------------------------------------------------*/
+
+    always_comb begin : state_fsm_comb
         if (rst_clk_ni == 0) begin
-            state <= 0;
-            register_data_o <= 0;
-            register_address_o <= 0;
-            enable_register_data_o <= 0;
-            write_data_ready_o <= 0;
-            write_address_ready_o <= 0;
+            state_d = IDLE;
         end else begin
-            if (state == 1'b0) begin 
-                state <= write_data_valid_i & write_address_valid_i;
-                register_data_o <= write_data_i;
-                register_address_o <= write_address_i;
-                enable_register_data_o <= write_data_strb_i & {(DATA_SIZE / 8){write_data_valid_i & write_address_valid_i}};        
-                write_data_ready_o <= write_data_valid_i & write_address_valid_i;
-                write_address_ready_o <= write_data_valid_i & write_address_valid_i;
-                write_response_o <= (register_address_o <= $clog2(DEPTH)) ? 2'b00 : 2'b10; //Should stall for HS
-                write_response_valid_o <= write_data_valid_i & write_address_valid_i;
-            end else begin 
-                write_data_ready_o <= 1'b0;
-                state <= ~(write_response_valid_o & write_response_ready_i);
-            end
+            state_d = state_q;
+            case (state_q)
+                IDLE: begin
+                    if (AND_valid_and_ready) begin
+                        state_d = WRITE;
+                    end
+                end
+                WRITE: begin
+                    state_d = RESPONSE;
+                end
+                RESPONSE: begin
+                    if (rsp_valid_and_ready) begin
+                        state_d = IDLE;
+                    end
+                end
+                default: begin
+                    state_d = IDLE;
+                end
+            endcase
+        end
+    end
+
+    always_ff @(posedge clk_i) begin: state_fsm_ff
+        if (rst_clk_ni == 0) begin
+            state_q <= IDLE;
+        end else begin
+            state_q <= state_d;
+        end
+    end
+
+/*----------------------------------------------------------------------------*/
+/*                             CHANNEL LOGIC                                  */
+/*----------------------------------------------------------------------------*/
+    logic write_address_ready_d;
+    logic write_data_ready_d;
+    logic write_response_valid_d;
+    logic [DATA_SIZE - 1 : 0] register_data_d;
+    logic [$clog2(DEPTH) - 1 : 0] register_address_d;
+    logic [DATA_SIZE / 8 - 1 : 0] enable_register_data_d;
+
+    always_comb begin : channel_comb
+        if (rst_clk_ni == 0) begin
+            write_address_ready_d   = 0;
+            write_data_ready_d      = 0;
+            write_response_d        = OKAY;
+            write_response_valid_d  = 0;
+            register_data_d         = 0;
+            register_address_d      = 0;
+            enable_register_data_d  = 0;
+        end else begin
+            write_address_ready_d   = write_address_ready_o;
+            write_data_ready_d      = write_data_ready_o;
+            write_response_d        = write_response_o;
+            write_response_valid_d  = write_response_valid_o;
+            register_data_d         = register_data_o;
+            register_address_d      = register_address_o;
+            enable_register_data_d  = enable_register_data_o;
+            case (state_q)
+                IDLE: begin
+                    write_address_ready_d = 1;
+                    write_data_ready_d = 1;
+                    if (AND_valid_and_ready) begin
+                        register_data_d = write_data_i;
+                        register_address_d = write_address_i / (DATA_SIZE / 8);
+                        enable_register_data_d = write_data_strb_i;
+                        write_address_ready_d = 0;
+                        write_data_ready_d = 0;
+                    end
+                end
+                WRITE: begin
+                    //Empty
+                end
+                RESPONSE: begin
+                    write_response_d =
+                        register_address_o <= DEPTH ? OKAY : DECERR;
+                    write_response_valid_d = 1;
+                    if (rsp_valid_and_ready) begin
+                        write_response_valid_d = 0;
+                    end
+                end
+                default: begin
+                    write_address_ready_d   = 'X;
+                    write_data_ready_d      = 'X;
+                    write_response_d._code  = 'X;
+                    write_response_valid_d  = 'X;
+                    register_data_d         = 'X;
+                    register_address_d      = 'X;
+                    enable_register_data_d  = 'X;
+                end
+            endcase
+        end
+    end
+
+    always_ff @(posedge clk_i) begin: channel_ff
+        if (rst_clk_ni == 0) begin
+            write_address_ready_o   <= 0;
+            write_data_ready_o      <= 0;
+            write_response_o        <= 0;
+            write_response_valid_o <= 0;
+            register_data_o         <= 0;
+            register_address_o      <= 0;
+            enable_register_data_o  <= 0;
+        end else begin
+            write_address_ready_o <= write_address_ready_d;
+            write_data_ready_o <= write_data_ready_d;
+            write_response_o <= write_response_d;
+            write_response_valid_o <= write_response_valid_d;
+            register_data_o <= register_data_d;
+            register_address_o <= register_address_d;
+            enable_register_data_o <= enable_register_data_d;
         end
     end
 
