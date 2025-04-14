@@ -53,7 +53,7 @@ class uvm_axi4_lite_scoreboard extends uvm_scoreboard;
         end
     endfunction
 
-    function check_data(uvm_axi4_lite_transaction transaction);
+    function void check_data(uvm_axi4_lite_transaction transaction);
         if (transaction.data_write != transaction.data_read) begin
             `uvm_fatal(get_full_name(), $sformatf("Data mismatch: %s", transaction.convert2string()));
             item_bad_q.push_back(transaction);

@@ -34,7 +34,7 @@ class uvm_axi4_lite_random_write_sequence extends uvm_axi4_lite_base_sequence;
         int unsigned num_txn;
         int unsigned i = 0;
         `uvm_info("SEQ", "executing...", UVM_LOW)
-        num_txn = $urandom_range(5,20);
+        num_txn = $urandom_range(10, 100);
         repeat(num_txn) begin
             `uvm_create(item)
             item.randomize();
