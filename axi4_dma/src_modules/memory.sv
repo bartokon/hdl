@@ -57,8 +57,9 @@ module memory #(
       .enb(1'b1),              // 1-bit input: Memory enable signal for port B. Must be high on clock cycles when read operations are initiated. Pipelined internally.
       .regceb(1'b1),           // 1-bit input: Clock Enable for the last register stage on the output data path
       .rstb(rst),              // 1-bit input: Reset signal for the final port B output register stage. Synchronously resets output port doutb to the value specified by parameter READ_RESET_VALUE_B.
-      .wea(wea)            // WRITE_DATA_WIDTH_A/BYTE_WRITE_WIDTH_A-bit input: Write enable vector for port A input data port dina. 1 bit wide when word-wide writes are used. In byte-wide write configurations, each bit controls the writing one byte of dina to address addra. For example, to synchronously write only bits [15-8] of dina when WRITE_DATA_WIDTH_A is 32, wea would be 4'b0010.
-   );
+      .wea(wea),            // WRITE_DATA_WIDTH_A/BYTE_WRITE_WIDTH_A-bit input: Write enable vector for port A input data port dina. 1 bit wide when word-wide writes are used. In byte-wide write configurations, each bit controls the writing one byte of dina to address addra. For example, to synchronously write only bits [15-8] of dina when WRITE_DATA_WIDTH_A is 32, wea would be 4'b0010.
+      .sleep(1'b0)
+    );
    // End of xpm_memory_sdpram_inst instantiation
 endmodule
 
@@ -73,7 +74,7 @@ module tb_memory;
     logic rst = 1;
 
     memory #(
-        .DEPTH(2), 
+        .DEPTH(2),
         .DATA_SIZE(32)
     ) u0_mem (
         .addra(addra),
@@ -84,7 +85,7 @@ module tb_memory;
         .clk(clk),
         .rst(rst)
     );
-    
+
     task write_to_ram(
         input logic [31:0] data,
         input logic [3 : 0] we,
@@ -93,27 +94,27 @@ module tb_memory;
         dina = data;
         addra = addr;
         wea = we;
-        @(posedge clk) begin 
+        @(posedge clk) begin
             wea = 4'd0;
             data = 32'd0;
             addr = 2'd0;
         end
     endtask
-    
+
     task read_from_ram(
         input logic [1:0] addr,
         output logic [31:0] doutb
     );
-        @(negedge clk) begin 
+        @(negedge clk) begin
             addrb = addr;
         end
         @(posedge clk) begin
             doutb = doutb;
         end
     endtask
-    
+
     always #10 clk = ~clk;
-    
+
     initial begin
         #100 rst = ~rst;
         for (int i = 'hFE; i < 'hFFF; i = i + 1) begin
@@ -121,5 +122,5 @@ module tb_memory;
             write_to_ram(i, 4'b0001, 2'd0);
         end
     end
-    
+
 endmodule
