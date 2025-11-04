@@ -1,2 +1,25 @@
-axi4_lite/axi4_lite_project
-skid_buffer/skid_buffer_project
+# Vivado/Xilinx generated files
+.Xil/
+*_project/
+project/
+xelab*
+xvlog*
+*.jou
+*.log
+*.pb
+
+# Vivado project directories
+projects/**/vivado/*_project/
+verification/**/project/*_project/
+verification/**/project/project/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
